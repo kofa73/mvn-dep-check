@@ -4,10 +4,12 @@ import json
 import subprocess
 import xml.etree.ElementTree as ET
 
-def run_command(cmd, cwd=None):
+def run_command(cmd, cwd=None, allowed_exit_codes=None):
+    if allowed_exit_codes is None:
+        allowed_exit_codes = [0]
     try:
         result = subprocess.run(cmd, cwd=cwd, shell=True, text=True, capture_output=True)
-        if result.returncode != 0:
+        if result.returncode not in allowed_exit_codes:
             print(f"WARNING: Command failed with exit code {result.returncode}: {cmd}\nStderr: {result.stderr}", file=sys.stderr)
         return result.stdout, result.stderr, result.returncode
     except Exception as e:
@@ -62,8 +64,8 @@ def check_heavy_dependencies(config_path):
             for pattern in patterns:
                 includes = "--include=\\*.java --include=\\*.kt --include=\\*.groovy --include=\\*.yml --include=\\*.yaml --include=\\*.properties --include=\\*.xml"
                 cmd = f"grep -ri {includes} '{pattern}' src/ 2>/dev/null"
-                out, err, rc = run_command(cmd)
-                if out.strip():
+                out, err, rc = run_command(cmd, allowed_exit_codes=[0, 1])
+                if rc == 0 and out.strip():
                     found_usage = True
                     break
             
