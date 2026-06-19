@@ -1,6 +1,5 @@
 import os
 import sys
-import yaml
 import json
 import subprocess
 import xml.etree.ElementTree as ET
@@ -39,13 +38,13 @@ def analyze_unused_dependencies():
                 in_unused_section = False
     return unused
 
-def check_heavy_dependencies(yaml_path):
+def check_heavy_dependencies(config_path):
     print("Checking heavy dependencies...", file=sys.stderr)
-    if not os.path.exists(yaml_path):
+    if not os.path.exists(config_path):
         return []
     
-    with open(yaml_path, 'r') as f:
-        config = yaml.safe_load(f)
+    with open(config_path, 'r') as f:
+        config = json.load(f)
         
     stdout, _, _ = run_command("mvn dependency:tree")
     exclusions = []
@@ -215,10 +214,10 @@ def check_versions():
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    yaml_path = os.path.join(script_dir, "heavy-dependencies.yaml")
+    config_path = os.path.join(script_dir, "heavy-dependencies.json")
     
     unused = analyze_unused_dependencies()
-    exclusions = check_heavy_dependencies(yaml_path)
+    exclusions = check_heavy_dependencies(config_path)
     redundant, overridden = check_versions()
     
     report = {
