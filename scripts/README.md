@@ -11,8 +11,9 @@ Dependencies in this list were explicitly declared in your `pom.xml` but Maven's
 * **Action to take:** Do **NOT** automatically delete these. They may be required dynamically at runtime (e.g., via reflection, SPIs, JDBC drivers, or auto-configuration). Consider changing their `<scope>` to `runtime` and injecting a `<!-- TODO: check if really needed -->` comment above them to safely shrink your compile-time classpath without risking runtime crashes.
 
 ### 2. `hitlist_exclusions`
-Heavyweight transitive dependencies (configured in `heavy-dependencies.json`) that are present in your dependency graph, but for which zero usage evidence could be found in your `.java`, `.kt`, `.yaml`, `.yml`, or `.properties` files.
-* **Action to take:** Find the top-level parent dependency (e.g., a massive Cloud Provider starter) that is pulling this library into the project. Add an explicit `<exclusion>` block to that parent dependency in your `pom.xml` to prevent the unused library from bloating your final application package.
+Heavyweight transitive dependencies (configured in `heavy-dependencies.json`) that are present in your dependency graph, but for which zero usage evidence could be found in your `.java`, `.kt`, `.yaml`, `.yml`, or `.properties` files. This output is grouped by the explicit parent dependency that pulls them in.
+* **Format:** `[{"parent_groupId": "...", "parent_artifactId": "...", "exclusions": [{"groupId": "...", "artifactId": "...", "reason": "..."}]}]`
+* **Action to take:** For each `parent_groupId` / `parent_artifactId` listed, find that exact `<dependency>` tag in your `pom.xml`. Inject the nested items from the `exclusions` array into an `<exclusions>` block inside that parent dependency to prevent the unused libraries from bloating your final application package.
 
 ### 3. `redundant_versions`
 Explicit `<version>` tags in your `pom.xml` that perfectly match the default version already provided by your project's Spring Boot BOM (`spring-boot-dependencies`).

@@ -48,8 +48,29 @@ def check_heavy_dependencies(config_path):
     with open(config_path, 'r') as f:
         config = json.load(f)
         
-    stdout, _, _ = run_command("mvn dependency:tree")
-    exclusions = []
+    run_command("mvn dependency:tree -DoutputType=json -DoutputFile=dep-tree.json")
+    if not os.path.exists("dep-tree.json"):
+        print("Failed to generate dep-tree.json", file=sys.stderr)
+        return []
+        
+    with open("dep-tree.json", "r") as f:
+        try:
+            dep_tree = json.load(f)
+        except json.JSONDecodeError:
+            print("Failed to parse dep-tree.json", file=sys.stderr)
+            return []
+            
+    os.remove("dep-tree.json")
+    
+    def find_in_tree(node, target_group, target_artifact):
+        if node.get("groupId") == target_group and node.get("artifactId") == target_artifact:
+            return True
+        for child in node.get("children", []):
+            if find_in_tree(child, target_group, target_artifact):
+                return True
+        return False
+
+    parent_exclusions = {}
     
     for item in config:
         dep = item.get("dependency", "")
@@ -58,8 +79,11 @@ def check_heavy_dependencies(config_path):
         dep_parts = dep.split(':')
         if len(dep_parts) < 2:
             continue
-        search_str = f"{dep_parts[0]}:{dep_parts[1]}"
-        if search_str in stdout:
+            
+        target_g = dep_parts[0]
+        target_a = dep_parts[1]
+        
+        if find_in_tree(dep_tree, target_g, target_a):
             found_usage = False
             for pattern in patterns:
                 includes = "--include=\\*.java --include=\\*.kt --include=\\*.groovy --include=\\*.yml --include=\\*.yaml --include=\\*.properties --include=\\*.xml"
@@ -70,11 +94,28 @@ def check_heavy_dependencies(config_path):
                     break
             
             if not found_usage:
-                exclusions.append({
-                    "exclude_group": dep_parts[0],
-                    "exclude_artifact": dep_parts[1],
-                    "reason": f"No patterns {patterns} found in codebase"
-                })
+                # Check top-level children (explicit dependencies)
+                for child in dep_tree.get("children", []):
+                    if find_in_tree(child, target_g, target_a):
+                        parent_key = (child.get("groupId"), child.get("artifactId"))
+                        if parent_key not in parent_exclusions:
+                            parent_exclusions[parent_key] = []
+                        
+                        exc = {
+                            "groupId": target_g,
+                            "artifactId": target_a,
+                            "reason": f"No patterns {patterns} found in codebase"
+                        }
+                        if exc not in parent_exclusions[parent_key]:
+                            parent_exclusions[parent_key].append(exc)
+                            
+    exclusions = []
+    for (pg, pa), excls in parent_exclusions.items():
+        exclusions.append({
+            "parent_groupId": pg,
+            "parent_artifactId": pa,
+            "exclusions": excls
+        })
                 
     return exclusions
 
