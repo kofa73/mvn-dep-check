@@ -18,7 +18,7 @@ def run_command(cmd, cwd=None, allowed_exit_codes=None):
 
 def analyze_unused_dependencies():
     print("Running dependency:analyze...", file=sys.stderr)
-    stdout, stderr, rc = run_command("mvn dependency:analyze -DignoreNonCompile=true -DoutputXML=false")
+    stdout, stderr, rc = run_command("mvn -B dependency:analyze -DignoreNonCompile=true -DoutputXML=false")
     unused = []
     in_unused_section = False
     for line in stdout.splitlines():
@@ -29,12 +29,12 @@ def analyze_unused_dependencies():
         if in_unused_section:
             if not line or line.startswith("[INFO]") and not line[6:].strip():
                 continue
-            if line.startswith("[WARNING]") and line != "[WARNING] Unused declared dependencies found:":
+            if line.startswith("[WARNING]"):
                 parts = line.split()
                 if len(parts) > 1:
                     dep_str = parts[-1]
                     dep_parts = dep_str.split(':')
-                    if len(dep_parts) >= 2:
+                    if len(dep_parts) >= 3:
                         unused.append({"groupId": dep_parts[0], "artifactId": dep_parts[1]})
             elif line.startswith("[INFO]"):
                 in_unused_section = False
@@ -48,7 +48,7 @@ def check_heavy_dependencies(config_path):
     with open(config_path, 'r') as f:
         config = json.load(f)
         
-    run_command("mvn dependency:tree -DoutputType=json -DoutputFile=dep-tree.json")
+    run_command("mvn -B dependency:tree -DoutputType=json -DoutputFile=dep-tree.json")
     if not os.path.exists("dep-tree.json"):
         print("Failed to generate dep-tree.json", file=sys.stderr)
         return []
@@ -209,7 +209,7 @@ def check_versions():
     with open("pom-check.xml", "w") as f:
         f.write(check_pom)
         
-    stdout, _, _ = run_command("mvn help:effective-pom -f pom-check.xml")
+    stdout, _, _ = run_command("mvn -B help:effective-pom -f pom-check.xml")
     if os.path.exists("pom-check.xml"):
         os.remove("pom-check.xml")
     
