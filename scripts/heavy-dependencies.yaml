@@ -1,0 +1,24 @@
+- dependency: "org.springframework.kafka:spring-kafka"
+  patterns: ["kafka", "KafkaTemplate", "@KafkaListener"]
+- dependency: "org.springframework.data:spring-data-redis"
+  patterns: ["redis", "RedisTemplate", "@EnableRedis"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-mongodb"
+  patterns: ["mongo", "MongoTemplate", "@EnableMongo"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-elasticsearch"
+  patterns: ["elastic", "ElasticsearchTemplate", "@EnableElasticsearch"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-cassandra"
+  patterns: ["cassandra", "CassandraTemplate", "@EnableCassandra"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-couchbase"
+  patterns: ["couchbase", "CouchbaseTemplate", "@EnableCouchbase"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-neo4j"
+  patterns: ["neo4j", "Neo4jTemplate", "@EnableNeo4j"]
+- dependency: "org.springframework.boot:spring-boot-starter-amqp"
+  patterns: ["amqp", "rabbitmq", "RabbitTemplate", "@RabbitListener"]
+- dependency: "org.springframework.boot:spring-boot-starter-activemq"
+  patterns: ["activemq", "jms", "JmsTemplate"]
+- dependency: "org.springframework.boot:spring-boot-starter-artemis"
+  patterns: ["artemis", "jms", "JmsTemplate"]
+- dependency: "org.springframework.boot:spring-boot-starter-quartz"
+  patterns: ["quartz", "@Scheduler", "JobBuilder"]
+- dependency: "org.springframework.boot:spring-boot-starter-data-r2dbc"
+  patterns: ["r2dbc", "DatabaseClient", "@EnableR2dbc"]
